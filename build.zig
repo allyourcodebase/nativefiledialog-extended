@@ -64,6 +64,7 @@ pub fn build(b: *std.Build) void {
             .strip = strip,
         });
         test_exe.addCSourceFile(.{ .file = upstream.path("test").path(b, sub_path) });
+        if (std.mem.eql(u8, std.fs.path.extension(sub_path), ".cpp")) test_exe.linkLibCpp();
         test_exe.linkLibrary(nfd);
 
         install_tests_step.dependOn(&b.addInstallArtifact(test_exe, .{}).step);
