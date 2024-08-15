@@ -63,7 +63,7 @@ pub fn build(b: *std.Build) void {
             .pic = pic,
             .strip = strip,
         });
-        test_exe.addCSourceFile(.{ .file = upstream.path("test").path(b, sub_path) });
+        test_exe.addCSourceFile(.{ .file = upstream.path(b.fmt("test/{s}", .{sub_path})) });
         if (std.mem.eql(u8, std.fs.path.extension(sub_path), ".cpp")) test_exe.linkLibCpp();
         test_exe.linkLibrary(nfd);
 
