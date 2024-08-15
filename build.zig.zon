@@ -1,0 +1,17 @@
+.{
+    .name = "nativefiledialog-extended",
+    .version = "1.2.1",
+    .minimum_zig_version = "0.12.0",
+    .dependencies = .{
+        .@"nativefiledialog-extended" = .{
+            .url = "git+https://github.com/btzy/nativefiledialog-extended.git?ref=v1.2.1#86d5f2005fe1c00747348a12070fec493ea2407e",
+            .hash = "1220f7fb0d64d9c6e06bff39d93abaed733afef7c64281edfd3e433bee9eba28c8cf",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "LICENSE",
+        "README.md",
+    },
+}
