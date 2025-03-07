@@ -5,47 +5,58 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const linkage = b.option(std.builtin.LinkMode, "linkage", "Link mode") orelse .static;
     const strip = b.option(bool, "strip", "Omit debug information");
     const pic = b.option(bool, "pie", "Produce Position Independent Code");
 
     const portal = b.option(bool, "portal", "Use xdg-desktop-portal instead of GTK") orelse false;
-    const use_allowedcontenttypes_if_available = b.option(bool, "use-allowedcontenttypes-if-available", "Use allowedContentTypes for filter lists on macOS >= 11.0") orelse true;
     const append_extension = b.option(bool, "append-extension", "Automatically append file extension to an extensionless selection in SaveDialog()") orelse false;
 
-    const nfd = b.addStaticLibrary(.{
+    const flags: []const []const u8 = &.{
+        "-nostdlib",
+        "-fno-exceptions",
+        "-fno-rtti",
+    };
+
+    const nfd = b.addLibrary(.{
+        .linkage = linkage,
         .name = "nfd",
-        .target = target,
-        .optimize = optimize,
-        .pic = pic,
-        .strip = strip,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .pic = pic,
+            .strip = strip,
+        }),
     });
     b.installArtifact(nfd);
-    nfd.addIncludePath(upstream.path("src/include"));
+    nfd.root_module.addIncludePath(upstream.path("src/include"));
     nfd.installHeadersDirectory(upstream.path("src/include"), "", .{ .include_extensions = &.{ ".h", ".hpp" } });
     if (target.result.os.tag == .windows) {
-        nfd.linkLibCpp();
-        nfd.addCSourceFile(.{ .file = upstream.path("src/nfd_win.cpp") });
-        nfd.linkSystemLibrary("ole32");
-        nfd.linkSystemLibrary("uuid");
-        nfd.linkSystemLibrary("shell32");
+        nfd.root_module.link_libcpp = true;
+        nfd.root_module.addCSourceFile(.{ .file = upstream.path("src/nfd_win.cpp"), .flags = flags });
+        nfd.root_module.linkSystemLibrary("ole32", .{});
+        nfd.root_module.linkSystemLibrary("uuid", .{});
+        nfd.root_module.linkSystemLibrary("shell32", .{});
     } else if (target.result.os.tag.isDarwin()) {
-        nfd.addCSourceFile(.{ .file = upstream.path("src/nfd_cocoa.m") });
-        nfd.linkFramework("AppKit");
         // Whether this is correct is completely untested since I don't use macOS.
-        nfd.root_module.addCMacro("NFD_MACOS_ALLOWEDCONTENTTYPES", if (use_allowedcontenttypes_if_available) "1" else "0");
-        if (use_allowedcontenttypes_if_available and target.result.os.isAtLeast(.macos, .{ .major = 11, .minor = 0, .patch = 0 }).?) {
-            nfd.linkFramework("UniformTypeIdentifiers");
-        }
+
+        nfd.root_module.addCSourceFile(.{ .file = upstream.path("src/nfd_cocoa.m"), .flags = flags });
+        nfd.root_module.linkFramework("AppKit", .{});
+
+        // Zig has dropped support for MacOS 12
+        // https://github.com/ziglang/zig/commit/21f0fce28bcceb5ee227f456401f250d9c62b31b
+        nfd.root_module.addCMacro("NFD_MACOS_ALLOWEDCONTENTTYPES", "1");
+        nfd.root_module.linkFramework("UniformTypeIdentifiers", .{});
     } else {
-        nfd.linkLibCpp();
+        nfd.root_module.link_libcpp = true;
         if (append_extension) nfd.root_module.addCMacro("NFD_APPEND_EXTENSION", "1");
         if (portal) {
-            nfd.addCSourceFile(.{ .file = upstream.path("src/nfd_portal.cpp") });
-            nfd.linkSystemLibrary("dbus-1");
+            nfd.root_module.addCSourceFile(.{ .file = upstream.path("src/nfd_portal.cpp"), .flags = flags });
+            nfd.root_module.linkSystemLibrary("dbus-1", .{});
             nfd.root_module.addCMacro("NFD_PORTAL", "1");
         } else {
-            nfd.addCSourceFile(.{ .file = upstream.path("src/nfd_gtk.cpp") });
-            nfd.linkSystemLibrary("gtk+-3.0");
+            nfd.root_module.addCSourceFile(.{ .file = upstream.path("src/nfd_gtk.cpp"), .flags = flags });
+            nfd.root_module.linkSystemLibrary("gtk+-3.0", .{});
         }
     }
 
@@ -58,14 +69,17 @@ pub fn build(b: *std.Build) void {
 
         const test_exe = b.addExecutable(.{
             .name = name,
-            .target = target,
-            .optimize = optimize,
-            .pic = pic,
-            .strip = strip,
+            .root_module = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .pic = pic,
+                .strip = strip,
+                .link_libc = true,
+                .link_libcpp = std.mem.eql(u8, std.fs.path.extension(sub_path), ".cpp"),
+            }),
         });
-        test_exe.addCSourceFile(.{ .file = upstream.path(b.fmt("test/{s}", .{sub_path})) });
-        if (std.mem.eql(u8, std.fs.path.extension(sub_path), ".cpp")) test_exe.linkLibCpp();
-        test_exe.linkLibrary(nfd);
+        test_exe.root_module.addCSourceFile(.{ .file = upstream.path(b.fmt("test/{s}", .{sub_path})), .flags = flags });
+        test_exe.root_module.linkLibrary(nfd);
 
         install_tests_step.dependOn(&b.addInstallArtifact(test_exe, .{}).step);
 
