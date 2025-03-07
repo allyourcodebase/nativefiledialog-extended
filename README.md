@@ -11,7 +11,7 @@ First, update your `build.zig.zon`:
 ```
 # Initialize a `zig build` project if you haven't already
 zig init
-zig fetch --save git+https://github.com/allyourcodebase/nativefiledialog-extended.git#1.2.1
+zig fetch --save git+https://github.com/allyourcodebase/nativefiledialog-extended.git#1.2.1-1
 ```
 
 You can then import `nativefiledialog-extended` in your `build.zig` with:
