@@ -65,7 +65,7 @@ pub fn build(b: *std.Build) void {
     const install_tests_step = b.step("install-tests", "Install all test executables");
 
     for (test_sources) |sub_path| {
-        const name = b.dupe(std.fs.path.stem(sub_path));
+        const name = b.allocator.dupe(u8, std.Io.Dir.path.stem(sub_path)) catch @panic("OOM");
         std.mem.replaceScalar(u8, name, '.', '-');
         std.mem.replaceScalar(u8, name, '_', '-');
 
@@ -77,7 +77,7 @@ pub fn build(b: *std.Build) void {
                 .pic = pic,
                 .strip = strip,
                 .link_libc = true,
-                .link_libcpp = std.mem.eql(u8, std.fs.path.extension(sub_path), ".cpp"),
+                .link_libcpp = std.mem.eql(u8, std.Io.Dir.path.extension(sub_path), ".cpp"),
             }),
         });
         test_exe.root_module.addCSourceFile(.{ .file = upstream.path(b.fmt("test/{s}", .{sub_path})), .flags = flags });
