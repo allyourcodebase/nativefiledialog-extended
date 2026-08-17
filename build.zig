@@ -11,6 +11,7 @@ pub fn build(b: *std.Build) void {
 
     const portal = b.option(bool, "portal", "Use xdg-desktop-portal instead of GTK") orelse false;
     const append_extension = b.option(bool, "append-extension", "Automatically append file extension to an extensionless selection in SaveDialog()") orelse false;
+    const override_recent_with_default = b.option(bool, "override-recent-with-default", "Use defaultPath instead of recent folder on Windows") orelse false;
 
     const flags: []const []const u8 = &.{
         "-nostdlib",
@@ -37,6 +38,7 @@ pub fn build(b: *std.Build) void {
         nfd.root_module.linkSystemLibrary("ole32", .{});
         nfd.root_module.linkSystemLibrary("uuid", .{});
         nfd.root_module.linkSystemLibrary("shell32", .{});
+        if (override_recent_with_default) nfd.root_module.addCMacro("NFD_OVERRIDE_RECENT_WITH_DEFAULT", "1");
     } else if (target.result.os.tag.isDarwin()) {
         // Whether this is correct is completely untested since I don't use macOS.
 

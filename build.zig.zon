@@ -1,11 +1,11 @@
 .{
     .name = .nativefiledialog_extended,
-    .version = "1.2.1-2",
+    .version = "1.3.0",
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .@"nativefiledialog-extended" = .{
-            .url = "git+https://github.com/btzy/nativefiledialog-extended.git?ref=v1.2.1#86d5f2005fe1c00747348a12070fec493ea2407e",
-            .hash = "N-V-__8AAN9tCgD3-w1k2cbga_852Tq67XM6_vfGQoHt_T5D",
+            .url = "git+https://github.com/btzy/nativefiledialog-extended.git?ref=v1.3.0#fc168e8605bfa51aaec22ab0c4e46b9de665a437",
+            .hash = "N-V-__8AACyNCgAErIC5cqwavyBgvTjQ2buRUskn_q4Ibc4z",
         },
     },
     .paths = .{
