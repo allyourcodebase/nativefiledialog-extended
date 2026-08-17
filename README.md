@@ -21,9 +21,9 @@ const nfd_dependency = b.dependency("nativefiledialog-extended", .{
     .target = target,
     .optimize = optimize,
 });
-your_exe.linkLibrary(nfd_dependency.artifact("nfd"));
+your_exe.root_module.linkLibrary(nfd_dependency.artifact("nfd"));
 ```
 
 ## Dependencies
 
-See https://github.com/btzy/nativefiledialog-extended/tree/v1.3.0#dependencies
+See https://github.com/btzy/nativefiledialog-extended/tree/v1.4.1#dependencies

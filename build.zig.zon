@@ -1,11 +1,21 @@
 .{
     .name = .nativefiledialog_extended,
-    .version = "1.3.0",
+    .version = "1.4.1",
     .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .@"nativefiledialog-extended" = .{
-            .url = "git+https://github.com/btzy/nativefiledialog-extended.git?ref=v1.3.0#fc168e8605bfa51aaec22ab0c4e46b9de665a437",
-            .hash = "N-V-__8AACyNCgAErIC5cqwavyBgvTjQ2buRUskn_q4Ibc4z",
+            .url = "git+https://github.com/btzy/nativefiledialog-extended.git?ref=v1.4.1#65b2f070a0fcfee0d453a64e770a217ab0b6ff4f",
+            .hash = "N-V-__8AAEXCCwCK8Vr9EDrBMGx0bV1Lt7QiWcrFZ3X2DA75",
+        },
+        .wayland = .{
+            .url = "git+https://github.com/allyourcodebase/wayland.git?ref=1.26.0#f60c569a92500053b99199912467eaa782990cd2",
+            .hash = "wayland-1.26.0-dxEBa8uIAADCPVu8GLlRRaUoU0AK7r5hlZ_XJQ0He41q",
+            .lazy = true,
+        },
+        .wayland_protocols = .{
+            .url = "git+https://gitlab.freedesktop.org/wayland/wayland-protocols.git?ref=1.50#3eab2dccf4bfdd85c16d312a6c8c8fbc2a6e73a8",
+            .hash = "N-V-__8AAOM9EQA8SyN285exZO9Ib8FLAhn4cDW7q55sCWMl",
+            .lazy = true,
         },
     },
     .paths = .{

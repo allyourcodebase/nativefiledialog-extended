@@ -13,6 +13,9 @@ pub fn build(b: *std.Build) void {
     const append_extension = b.option(bool, "append-extension", "Automatically append file extension to an extensionless selection in SaveDialog()") orelse false;
     const override_recent_with_default = b.option(bool, "override-recent-with-default", "Use defaultPath instead of recent folder on Windows") orelse false;
 
+    const enable_x11 = b.option(bool, "x11", "Support X11 on Linux") orelse true;
+    const enable_wayland = b.option(bool, "wayland", "Support Wayland on Linux") orelse true;
+
     const flags: []const []const u8 = &.{
         "-nostdlib",
         "-fno-exceptions",
@@ -59,6 +62,62 @@ pub fn build(b: *std.Build) void {
         } else {
             nfd.root_module.addCSourceFile(.{ .file = upstream.path("src/nfd_gtk.cpp"), .flags = flags });
             nfd.root_module.linkSystemLibrary("gtk+-3.0", .{});
+        }
+        if (enable_x11) nfd.root_module.addCMacro("NFD_X11", "1");
+        if (enable_wayland) skip_wayland: {
+            nfd.root_module.addCMacro("NFD_WAYLAND", "1");
+
+            if (b.systemIntegrationOption("wayland-client", .{})) {
+                nfd.root_module.linkSystemLibrary("wayland-client", .{});
+            } else if (b.lazyDependency("wayland", .{
+                .target = target,
+                .optimize = optimize,
+            })) |wayland| {
+                nfd.root_module.linkLibrary(wayland.artifact("wayland-client"));
+            }
+
+            const use_system_wayland_scanner = b.systemIntegrationOption("wayland-scanner", .{});
+            const host_wayland = if (!use_system_wayland_scanner)
+                b.lazyDependency("wayland", .{
+                    .target = b.graph.host,
+                    .optimize = std.builtin.OptimizeMode.Debug,
+                })
+            else
+                null;
+
+            const use_system_wayland_protocols = b.systemIntegrationOption("wayland-protocols", .{});
+
+            const wayland_protocols: std.Build.LazyPath = if (use_system_wayland_protocols) blk: {
+                const pkgdatadir = b.run(&.{
+                    b.graph.environ_map.get("PKG_CONFIG") orelse "pkg-config",
+                    "wayland-protocols",
+                    "--variable=pkgdatadir",
+                });
+                break :blk .{ .cwd_relative = std.mem.trim(u8, pkgdatadir, &std.ascii.whitespace) };
+            } else if (b.lazyDependency("wayland_protocols", .{})) |wayland_protocols|
+                wayland_protocols.path(".")
+            else
+                break :skip_wayland;
+
+            const run_wayland_scanner1: *std.Build.Step.Run = .create(b, "run wayland-scanner");
+            const run_wayland_scanner2: *std.Build.Step.Run = .create(b, "run wayland-scanner");
+            if (use_system_wayland_scanner) {
+                run_wayland_scanner1.addArg("wayland-scanner");
+                run_wayland_scanner2.addArg("wayland-scanner");
+            } else if (host_wayland) |wayland_host| {
+                run_wayland_scanner1.addArtifactArg(wayland_host.artifact("wayland-scanner"));
+                run_wayland_scanner2.addArtifactArg(wayland_host.artifact("wayland-scanner"));
+            }
+
+            run_wayland_scanner1.addArg("client-header");
+            run_wayland_scanner1.addFileArg(wayland_protocols.path(b, "unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"));
+            const header_file = run_wayland_scanner1.addOutputFileArg("xdg-foreign-unstable-v1.h");
+            nfd.root_module.addIncludePath(header_file.dirname());
+
+            run_wayland_scanner2.addArg("public-code");
+            run_wayland_scanner2.addFileArg(wayland_protocols.path(b, "unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"));
+            const source_file = run_wayland_scanner2.addOutputFileArg("xdg-foreign-unstable-v1.c");
+            nfd.root_module.addCSourceFile(.{ .file = source_file });
         }
     }
 
