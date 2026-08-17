@@ -11,7 +11,7 @@ First, update your `build.zig.zon`:
 ```
 # Initialize a `zig build` project if you haven't already
 zig init
-zig fetch --save git+https://github.com/allyourcodebase/nativefiledialog-extended.git#1.2.1-2
+zig fetch --save git+https://github.com/allyourcodebase/nativefiledialog-extended.git#1.3.0
 ```
 
 You can then import `nativefiledialog-extended` in your `build.zig` with:
@@ -26,4 +26,4 @@ your_exe.linkLibrary(nfd_dependency.artifact("nfd"));
 
 ## Dependencies
 
-See https://github.com/btzy/nativefiledialog-extended/tree/v1.2.1#dependencies
+See https://github.com/btzy/nativefiledialog-extended/tree/v1.3.0#dependencies
