@@ -1,7 +1,7 @@
 .{
     .name = .nativefiledialog_extended,
     .version = "1.4.1",
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
     .dependencies = .{
         .@"nativefiledialog-extended" = .{
             .url = "git+https://github.com/btzy/nativefiledialog-extended.git?ref=v1.4.1#65b2f070a0fcfee0d453a64e770a217ab0b6ff4f",

@@ -80,7 +80,7 @@ pub fn build(b: *std.Build) void {
             const host_wayland = if (!use_system_wayland_scanner)
                 b.lazyDependency("wayland", .{
                     .target = b.graph.host,
-                    .optimize = std.builtin.OptimizeMode.Debug,
+                    .optimize = std.builtin.OptimizeMode.debug,
                 })
             else
                 null;
@@ -93,7 +93,7 @@ pub fn build(b: *std.Build) void {
                     "wayland-protocols",
                     "--variable=pkgdatadir",
                 });
-                break :blk .{ .cwd_relative = std.mem.trim(u8, pkgdatadir, &std.ascii.whitespace) };
+                break :blk b.graph.cwdRelativePath(std.mem.trim(u8, pkgdatadir, &std.ascii.whitespace));
             } else if (b.lazyDependency("wayland_protocols", .{})) |wayland_protocols|
                 wayland_protocols.path(".")
             else
@@ -105,18 +105,18 @@ pub fn build(b: *std.Build) void {
                 run_wayland_scanner1.addArg("wayland-scanner");
                 run_wayland_scanner2.addArg("wayland-scanner");
             } else if (host_wayland) |wayland_host| {
-                run_wayland_scanner1.addArtifactArg(wayland_host.artifact("wayland-scanner"));
-                run_wayland_scanner2.addArtifactArg(wayland_host.artifact("wayland-scanner"));
+                run_wayland_scanner1.addArtifactArg2(wayland_host.artifact("wayland-scanner"), .{});
+                run_wayland_scanner2.addArtifactArg2(wayland_host.artifact("wayland-scanner"), .{});
             }
 
             run_wayland_scanner1.addArg("client-header");
-            run_wayland_scanner1.addFileArg(wayland_protocols.path(b, "unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"));
-            const header_file = run_wayland_scanner1.addOutputFileArg("xdg-foreign-unstable-v1.h");
+            run_wayland_scanner1.addFileArg2(wayland_protocols.path(b, "unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"), .{});
+            const header_file = run_wayland_scanner1.addOutputFileArg2("xdg-foreign-unstable-v1.h", .{});
             nfd.root_module.addIncludePath(header_file.dirname());
 
             run_wayland_scanner2.addArg("public-code");
-            run_wayland_scanner2.addFileArg(wayland_protocols.path(b, "unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"));
-            const source_file = run_wayland_scanner2.addOutputFileArg("xdg-foreign-unstable-v1.c");
+            run_wayland_scanner2.addFileArg2(wayland_protocols.path(b, "unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"), .{});
+            const source_file = run_wayland_scanner2.addOutputFileArg2("xdg-foreign-unstable-v1.c", .{});
             nfd.root_module.addCSourceFile(.{ .file = source_file });
         }
     }
